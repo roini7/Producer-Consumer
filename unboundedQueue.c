@@ -17,7 +17,7 @@ void unboundedEnqueue(UnboundedQueue * buffer, article* newArticle) {
 
     sem_wait(&(buffer->mutex));
 
-    printf("dispatcher enqueue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
+//    printf("dispatcher enqueue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
     if (buffer->front == NULL) {
         buffer->front = newNode;
         buffer->rear = newNode;
@@ -33,18 +33,18 @@ void unboundedEnqueue(UnboundedQueue * buffer, article* newArticle) {
 article* unboundedDequeue(UnboundedQueue* buffer) {
     sem_wait(&(buffer->empty));
     sem_wait(&(buffer->mutex));
-
     node* removedNode = buffer->front;
     article* removedArticle = removedNode->article;
+//    printf("co-editor dequeue: %d %s %d\n", removedArticle->producerNum, removedArticle->category, removedArticle->counter);
 
     buffer->front = buffer->front->next;
 
     free(removedNode);
-
     sem_post(&(buffer->mutex));
 
     return removedArticle;
 }
+
 
 void destroyBuffer(UnboundedQueue* buffer) {
     node* current = buffer->front;

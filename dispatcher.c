@@ -55,6 +55,18 @@ void* dispatcherThread(void* args){
             }
         }
         if(queueDoneCount == dp->producerNum){
+            article* sentinal = (article*) malloc(sizeof(article));
+            if(sentinal == NULL){
+                printf("failed to allocate sentinal for unbounded queues\n");
+                free(sentinal);
+                return NULL;
+            }
+            sentinal->category = "DONE";
+            sentinal->producerNum = 0;
+            sentinal->counter = 0;
+            unboundedEnqueue(dp->pUnboundedQueue[0], sentinal);
+            unboundedEnqueue(dp->pUnboundedQueue[1], sentinal);
+            unboundedEnqueue(dp->pUnboundedQueue[2], sentinal);
             return NULL;
         }
     }

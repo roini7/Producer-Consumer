@@ -39,7 +39,7 @@ void boundedEnqueue(boundedQueue* queue,article* newArticle) {
 
     queue->rear++;
     queue->items[queue->rear] = newArticle;
-    printf("producer enqueue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
+//    printf("producer enqueue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
 
     // Release the mutex to allow other threads to access the queue
     sem_post(&queue->mutex);
@@ -71,7 +71,7 @@ article* BoundedDequeue(boundedQueue* queue) {
         }
         queue->front++;
     }
-    printf("dispatcher dequeue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
+//    printf("dispatcher dequeue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
     // critical section end
 
     // Release the mutex to allow other threads to access the queue

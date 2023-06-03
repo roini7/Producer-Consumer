@@ -7,6 +7,8 @@
 #include "boundedQueue.h"
 #include "unboundedQueue.h"
 #include "dispatcher.h"
+#include "coEditors.h"
+#include "screenManager.h"
 
 #define CATEGORIES_NUM 3
 #define BUFFER_SIZE 10
@@ -19,6 +21,28 @@ int allocationCheck(void* allocation, char* type){
     } else{
         return 0;
     }
+}
+
+int getLastIntegerFromFile(const char* filePath) {
+    FILE* file = fopen(filePath, "r");
+    if (file == NULL) {
+        printf("Failed to open the file.\n");
+        return -1; // Return -1 to indicate an error
+    }
+
+    int lastInteger = -1;
+    int currentValue;
+
+    char line[100];
+    while (fgets(line, sizeof(line), file)) {
+        if (sscanf(line, "%d", &currentValue) == 1) {
+            lastInteger = currentValue;
+        }
+    }
+
+    fclose(file);
+
+    return lastInteger;
 }
 
 //return producer array
@@ -65,6 +89,8 @@ producer** configHandler(char* path, int* ptrProdCount) {
     fclose(file);
     return producers;
 }
+
+
 
 
 int main(int argc, char* argv[]) {
@@ -117,17 +143,52 @@ int main(int argc, char* argv[]) {
         dispatcher* dp = (dispatcher*) malloc(sizeof(dispatcher));
         dispatcherInit(dp, unboundedQueues, boundedQueues, (*ptrProdSize));
         pthread_t dispatcher_thread;
-        int result = pthread_create(&dispatcher_thread, NULL,
+        int res = pthread_create(&dispatcher_thread, NULL,
                                     dispatcherThread, (void*) dp);
-        if (result != 0) {
-            printf("Failed to create thread: %d\n", result);
+        if (res != 0) {
+            printf("Failed to create dispatcher thread: %d\n", res);
         }
-
-        // Join producer threads, move after dispatcher
+        // initialize main queue and create co-editor threads
+        int mainQueueSize = getLastIntegerFromFile(argv[1]);
+        boundedQueue* mainQueue = (boundedQueue*) malloc(sizeof(boundedQueue));
+        if(allocationCheck((void*) mainQueue, "mainQueue")){
+            return 1;
+        }
+        initializeQueue(mainQueue, mainQueueSize);
+        pthread_t* t_gid2 = (pthread_t*) malloc(sizeof(pthread_t) * CATEGORIES_NUM);
+        coEditor** coEditors = (coEditor**) malloc(sizeof(coEditor) * CATEGORIES_NUM);
+        for(int i = 0; i < CATEGORIES_NUM; i++){
+            coEditor* co_editor = (coEditor*) malloc(sizeof(coEditor));
+            if(allocationCheck((void*) co_editor, "co-editor")){
+                return 1;
+            }
+            // init co-editor
+            initCoEditor(co_editor, mainQueue, unboundedQueues[i]);
+            coEditors[i] = co_editor;
+            // create co-editor threads and pass co-editor struct to them
+            pthread_t thread_id;
+            int result = pthread_create(&thread_id, NULL,
+                                        coEditorThread, (void*) coEditors[i]);
+            t_gid2[i] = thread_id;
+            if (result != 0) {
+                printf("Failed to create co-editor thread: %d\n", res);
+            }
+        }
+        // create screen manager thread
+        pthread_t screenThread;
+        res = pthread_create(&screenThread, NULL, screenFunc, (void*) mainQueue);
+        if(res != 0){
+            printf("Failed to create screen thread: %d\n", res);
+        }
+        // Join producer threads, dispatcher and co-editors
         for(int i = 0; i < *ptrProdSize; i++){
             pthread_join(t_gid[i], NULL);
         }
         pthread_join(dispatcher_thread, NULL);
+        for(int i = 0; i < CATEGORIES_NUM; i++){
+            pthread_join(t_gid2[i], NULL);
+        }
+        pthread_join(screenThread, NULL);
         return 0;
     }
 }
