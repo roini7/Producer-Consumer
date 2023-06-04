@@ -26,5 +26,6 @@ void destroyBuffer(UnboundedQueue* buffer);
 void initBuffer(UnboundedQueue* buffer);
 void unboundedEnqueue(UnboundedQueue* buffer, article* newArticle);
 article* unboundedDequeue(UnboundedQueue* buffer);
+void printUnboundedQueue(UnboundedQueue* uq);
 
 #endif //EX3_UNBOUNDEDQUEUE_H

@@ -21,52 +21,39 @@ void* dispatcherThread(void* args){
     if(queueStatus == NULL){
         printf("failed to allocate queueStatus\n");
         free(queueStatus);
+        return NULL;
     }
     // run circular on producer queues
     while(1){
         for(int i = 0; i < dp->producerNum; i++){
-            // skip queue if it is empty
-            if(dp->pBoundedQueue[i]->rear == -1){
-                continue;
-            } else{
-                int front;
-                if(dp->pBoundedQueue[i]->front == -1){
-                    front = 0;
-                } else{
-                    front = dp->pBoundedQueue[i]->front;
-                }
-                if(strcmp(dp->pBoundedQueue[i]->items[front]->category, "DONE") == 0){
-                    if(queueStatus[i]){
-                        continue;
-                    } else {
-                        queueStatus[i] = 1;
-                        queueDoneCount++;
-                        continue;
-                    }
-                }
-                article* extractedArticle = BoundedDequeue(dp->pBoundedQueue[i]);
-                if(strcmp(extractedArticle->category, "NEWS") == 0){
-                    unboundedEnqueue(dp->pUnboundedQueue[0], extractedArticle);
-                } else if(strcmp(extractedArticle->category, "WEATHER") == 0){
-                    unboundedEnqueue(dp->pUnboundedQueue[1], extractedArticle);
+            article* extractedArticle = BoundedDequeue(dp->pBoundedQueue[i]);
+            if(strcmp(extractedArticle->category, "DONE") == 0) {
+                free(extractedArticle);
+                if(queueStatus[i]){
+                    continue;
                 } else {
-                    unboundedEnqueue(dp->pUnboundedQueue[2], extractedArticle);
+                    queueStatus[i] = 1;
+                    queueDoneCount++;
+                    continue;
                 }
+            }else if(strcmp(extractedArticle->category, "NEWS") == 0){
+                unboundedEnqueue(dp->pUnboundedQueue[0], extractedArticle);
+            } else if(strcmp(extractedArticle->category, "WEATHER") == 0){
+                unboundedEnqueue(dp->pUnboundedQueue[1], extractedArticle);
+            } else {
+                unboundedEnqueue(dp->pUnboundedQueue[2], extractedArticle);
             }
         }
         if(queueDoneCount == dp->producerNum){
-            article* sentinal = (article*) malloc(sizeof(article));
-            if(sentinal == NULL){
-                printf("failed to allocate sentinal for unbounded queues\n");
-                free(sentinal);
-                return NULL;
+            // enqueue sentinal values to unbounded buffers
+            for(int i = 0; i < 3 ;i++){
+                article* sentinal = (article*) malloc(sizeof(article));
+                sentinal->category = "DONE";
+                sentinal->producerNum = i;
+                sentinal->counter = 0;
+                unboundedEnqueue(dp->pUnboundedQueue[i], sentinal);
             }
-            sentinal->category = "DONE";
-            sentinal->producerNum = 0;
-            sentinal->counter = 0;
-            unboundedEnqueue(dp->pUnboundedQueue[0], sentinal);
-            unboundedEnqueue(dp->pUnboundedQueue[1], sentinal);
-            unboundedEnqueue(dp->pUnboundedQueue[2], sentinal);
+            free(queueStatus);
             return NULL;
         }
     }

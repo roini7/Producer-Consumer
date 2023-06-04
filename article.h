@@ -8,8 +8,8 @@
 
 typedef struct {
     int producerNum;
-    char* category;
     int counter;
+    char* category;
 } article;
 
 article* generateArticle(int producerNum, int* categoryCounters);

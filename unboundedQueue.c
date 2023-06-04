@@ -58,4 +58,14 @@ void destroyBuffer(UnboundedQueue* buffer) {
 
     sem_destroy(&(buffer->empty));
     sem_destroy(&(buffer->mutex));
+    free(buffer);
+}
+
+void printUnboundedQueue(UnboundedQueue* uq){
+    node* current = uq->front;
+    while(current->next != NULL){
+        printf("%d %s %d\n", current->article->producerNum, current->article->category, current->article->counter);
+        current = current->next;
+    }
+    printf("%d %s %d\n", current->article->producerNum, current->article->category, current->article->counter);
 }

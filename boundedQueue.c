@@ -11,8 +11,8 @@ int initializeQueue(boundedQueue* queue, int size) {
         printf("queue allocation failed\n");
         return 1;
     }
-    queue->front = -1;
-    queue->rear = -1;
+    queue->front = 0;
+    queue->rear = 0;
     // Initialize the semaphore
     if (sem_init(&queue->empty, 0, queue->size) == -1) {
         perror("Failed to initialize semaphore");
@@ -37,9 +37,11 @@ void boundedEnqueue(boundedQueue* queue,article* newArticle) {
     // Lock the mutex to ensure exclusive access to the queue
     sem_wait(&queue->mutex);
 
-    queue->rear++;
+//    if(queue->front == -1 && queue->rear == -1){
+//        queue->front++;
+//    }
     queue->items[queue->rear] = newArticle;
-//    printf("producer enqueue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
+    queue->rear = (queue->rear + 1) % queue->size;
 
     // Release the mutex to allow other threads to access the queue
     sem_post(&queue->mutex);
@@ -52,38 +54,34 @@ article* BoundedDequeue(boundedQueue* queue) {
     article* newArticle;
 
     // Wait for a filled slot in the queue
-    sem_wait(&queue->full);
+    sem_wait(&(queue->full));
 
     // Lock the mutex to ensure exclusive access to the queue
-    sem_wait(&queue->mutex);
+    sem_wait(&(queue->mutex));
 
     // critical section start
-    if (queue->front == queue->rear && queue->front != -1) {
-        newArticle = queue->items[queue->front];
-        queue->rear = -1;
-        queue->front = -1;
-    } else { // front = -1 rear = 0
-        if(queue->front == -1){
-            queue->front++;
-            newArticle = queue->items[queue->front];
-        } else {
-            newArticle = queue->items[queue->front];
-        }
-        queue->front++;
-    }
-//    printf("dispatcher dequeue: %d %s %d\n", newArticle->producerNum, newArticle->category, newArticle->counter);
-    // critical section end
+    newArticle = queue->items[queue->front];
+    queue->front = (queue->front + 1) % queue->size;
+//    critical section end
 
     // Release the mutex to allow other threads to access the queue
-    sem_post(&queue->mutex);
+    sem_post(&(queue->mutex));
 
     // Signal that a slot has been emptied in the queue
-    sem_post(&queue->empty);
+    sem_post(&(queue->empty));
 
     return newArticle;
 }
 
 void destroyQueue(boundedQueue* queue){
+    int temp = queue->front;
+    while(temp != queue->rear){
+        free(queue->items[temp]);
+        temp = (temp + 1) % queue->size;
+    }
+    sem_destroy(&(queue->empty));
+    sem_destroy(&(queue->full));
+    sem_destroy(&(queue->mutex));
     free(queue->items);
     free(queue);
 }

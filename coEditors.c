@@ -26,5 +26,4 @@ void* coEditorThread(void* args){
         }
         usleep(100000);
     }
-    return NULL;
 }

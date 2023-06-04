@@ -12,7 +12,7 @@ void* producerThread(void* producer1){
      */
     producer* producerPtr = (producer*) producer1;
     // boundedEnqueue articles
-    int categories[CATEGORIES_NUM];
+    int categories[CATEGORIES_NUM] = {0};
     for(int i = 0; i < producerPtr->productsNum; i++){
         article* newArticle = generateArticle(producerPtr->producerNum, categories);
         boundedEnqueue(producerPtr->producerQueue, newArticle);

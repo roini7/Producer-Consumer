@@ -13,6 +13,27 @@
 #define CATEGORIES_NUM 3
 #define BUFFER_SIZE 10
 
+void deallocStructs(producer** producers, boundedQueue** boundedQueues, UnboundedQueue** unboundedQueues,
+                    coEditor** coEditors, int prodCount){
+    for(int i = 0; i < prodCount; i++){
+        destroyQueue(boundedQueues[i]);
+        free(producers[i]);
+    }
+    for(int i = 0; i < CATEGORIES_NUM; i++){
+        destroyBuffer(unboundedQueues[i]);
+        free(coEditors[i]);
+    }
+    free(producers);
+    free(boundedQueues);
+    free(unboundedQueues);
+    free(coEditors);
+}
+
+void deallocThreads(pthread_t* t_gid, pthread_t* t_gid2){
+    free(t_gid);
+    free(t_gid2);
+}
+
 int allocationCheck(void* allocation, char* type){
     if(allocation == NULL){
         printf("failed to allocate %s\n", type);
@@ -189,6 +210,11 @@ int main(int argc, char* argv[]) {
             pthread_join(t_gid2[i], NULL);
         }
         pthread_join(screenThread, NULL);
+        // free memory
+        deallocStructs(producers, boundedQueues, unboundedQueues, coEditors, *ptrProdSize);
+        deallocThreads(t_gid, t_gid2);
+        free(dp);
+        destroyQueue(mainQueue);
         return 0;
     }
 }
