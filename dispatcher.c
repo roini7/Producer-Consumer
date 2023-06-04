@@ -16,23 +16,20 @@ void* dispatcherThread(void* args){
      * and boundedEnqueue each article to the unbounded queues with the same categories
      */
     dispatcher* dp = (dispatcher*) args;
-    int* queueStatus = (int*) calloc(dp->producerNum, sizeof(int));
     int queueDoneCount = 0;
-    if(queueStatus == NULL){
-        printf("failed to allocate queueStatus\n");
-        free(queueStatus);
-        return NULL;
-    }
     // run circular on producer queues
     while(1){
         for(int i = 0; i < dp->producerNum; i++){
+            if(dp->pBoundedQueue[i]->done){
+                continue;
+            }
             article* extractedArticle = BoundedDequeue(dp->pBoundedQueue[i]);
             if(strcmp(extractedArticle->category, "DONE") == 0) {
                 free(extractedArticle);
-                if(queueStatus[i]){
+                if(dp->pBoundedQueue[i]->done){
                     continue;
                 } else {
-                    queueStatus[i] = 1;
+                    dp->pBoundedQueue[i]->done = 1;
                     queueDoneCount++;
                     continue;
                 }
@@ -53,7 +50,6 @@ void* dispatcherThread(void* args){
                 sentinal->counter = 0;
                 unboundedEnqueue(dp->pUnboundedQueue[i], sentinal);
             }
-            free(queueStatus);
             return NULL;
         }
     }

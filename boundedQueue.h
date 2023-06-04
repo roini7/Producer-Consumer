@@ -11,7 +11,7 @@
 #include "stdlib.h"
 
 typedef struct {
-    int size, front, rear;
+    int size, done, front, rear;
     sem_t empty, full;
     sem_t mutex;
     article** items;

@@ -7,6 +7,7 @@
 int initializeQueue(boundedQueue* queue, int size) {
     queue->items = (article**) malloc(sizeof(article) * size);
     queue->size = size;
+    queue->done = 0;
     if(queue->items == NULL){
         printf("queue allocation failed\n");
         return 1;
