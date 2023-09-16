@@ -6,7 +6,7 @@ This C implementation provides a solution for the producer-consumer problem in a
 
 The core of this implementation relies on the use of counting semaphores and binary semaphores to establish a secure synchronization mechanism between the producers and the dispatcher. This mechanism ensures that articles are produced, dispatched, and edited in a coordinated and orderly manner.
 
-![image](https://github.com/roini7/producer_consumer/assets/60584742/9246fa23-4813-4e61-99b1-d6bbd132d4df)
+![image](https://github.com/roini7/Producer-Consumer/assets/60584742/3b7d4e50-5d76-44e7-8d9f-f2715891339e)
 
 
 ## Co-Editing Process
